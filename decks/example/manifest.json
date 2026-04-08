@@ -1,0 +1,10 @@
+{
+  "title": "Example Deck",
+  "slides": [
+    { "file": "slide-cover.html", "label": "Cover" },
+    { "file": "slide-stats.html", "label": "Key Stats" },
+    { "file": "slide-content.html", "label": "Main Argument" },
+    { "file": "slide-hero.html", "label": "Case Study" },
+    { "file": "slide-close.html", "label": "Close" }
+  ]
+}

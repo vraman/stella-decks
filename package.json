@@ -1,0 +1,21 @@
+{
+  "name": "stella-decks",
+  "version": "1.0.0",
+  "description": "HTML slide deck system with design system, viewer, and PDF export",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "preview": "npx serve .",
+    "export": "node scripts/export-deck.mjs",
+    "export:md": "node scripts/export-deck-md.mjs",
+    "generate": "node scripts/generate-image.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "mime-types": "^2.1.35",
+    "openai": "^4.85.0",
+    "pdf-lib": "^1.17.1",
+    "puppeteer": "^24.2.1"
+  },
+  "license": "MIT"
+}

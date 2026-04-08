@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles/deck.css">
+<style>
+  .slide--example-hero {
+    background: var(--ink);
+    color: var(--white);
+    flex-direction: row;
+    padding: 0;
+  }
+  .example-hero__left {
+    flex: 1;
+    padding: 56px 48px 56px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+  }
+  .example-hero__right {
+    flex: 0.8;
+    background: var(--ink-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--slate-light);
+  }
+  .example-hero__label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--coral-soft);
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .example-hero__name {
+    font-family: var(--serif);
+    font-size: 36px;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .example-hero__origin {
+    font-size: 14px;
+    color: var(--slate-light);
+    margin-bottom: 20px;
+  }
+  .example-hero__desc {
+    font-size: 16px;
+    color: var(--slate-light);
+    line-height: 1.7;
+    margin-bottom: 32px;
+    max-width: 400px;
+  }
+  .example-hero__metrics {
+    display: flex;
+    gap: 40px;
+  }
+  .example-hero__metric-value {
+    font-family: var(--serif);
+    font-size: 48px;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+  .example-hero__metric-value--accent { color: var(--coral); }
+  .example-hero__metric-label {
+    font-size: 12px;
+    color: var(--slate-light);
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="slide slide--example-hero">
+  <div class="example-hero__left">
+    <div class="example-hero__label">Case Study</div>
+    <div class="example-hero__name">Company Name</div>
+    <div class="example-hero__origin">City, Country &middot; Founded 2019</div>
+    <div class="example-hero__desc">
+      A short description of the company and what makes it remarkable.
+      Hero slides tell a story, not list features. What was the insight,
+      the breakthrough, the outcome?
+    </div>
+    <div class="example-hero__metrics">
+      <div>
+        <div class="example-hero__metric-value example-hero__metric-value--accent">12.4x</div>
+        <div class="example-hero__metric-label">Key Metric</div>
+      </div>
+      <div>
+        <div class="example-hero__metric-value">$200M</div>
+        <div class="example-hero__metric-label">Supporting Metric</div>
+      </div>
+    </div>
+  </div>
+  <div class="example-hero__right">
+    Product image or screenshot goes here
+  </div>
+  <div class="slide-num slide-num--dark"></div>
+</div>
+</body>
+</html>
