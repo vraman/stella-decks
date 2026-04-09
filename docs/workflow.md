@@ -7,13 +7,13 @@ Day-to-day workflow for building and maintaining decks.
 Start a local server:
 
 ```bash
-npx serve .
+npm start
 ```
 
-Open the viewer:
+Opens at `http://localhost:3000` (redirects to example deck). To view a specific deck:
 
 ```
-http://localhost:3000/viewer/index.html?deck=example
+http://localhost:3000/viewer/index.html?deck=my-deck
 ```
 
 ### Viewer Controls

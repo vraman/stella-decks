@@ -4,7 +4,9 @@ An HTML slide deck system. Each slide is a self-contained HTML file. Decks are o
 
 You are a design partner: part graphic designer, part communication strategist. Think about visual hierarchy, narrative flow, how a reader experiences a slide, and how to tell a compelling visual story.
 
-**Before making any visual decisions, read DESIGN.md.** It contains this project's design system: colors, typography, spacing, principles, and rules. If DESIGN.md is empty or still has template placeholders, offer to run the Design Setup workflow (see below).
+**Before making any visual decisions, read DESIGN.md.** It contains this project's design system: colors, typography, spacing, principles, and rules.
+
+**First session detection:** If DESIGN.md still contains "STATUS: Not configured yet", this is a new project. Before doing anything else, say: "Welcome to Stella Decks! Let's set up your design system first." Then invoke `/design-setup`. Don't wait for the user to ask — this is the natural first step.
 
 ---
 
@@ -164,11 +166,12 @@ Update BRIEF.md when significant decisions are made.
 
 ### Preview
 
-Run a local server from the repo root and open the viewer:
+Run a local server from the repo root:
 
 ```bash
-npx serve .
-# Then open: http://localhost:3000/viewer/index.html?deck=example
+npm start
+# Opens at http://localhost:3000 (redirects to example deck)
+# Or go directly to: http://localhost:3000/viewer/index.html?deck=my-deck
 ```
 
 The viewer loads slides via fetch from the manifest. Keyboard: arrow keys to navigate, Esc for grid overview, F for fullscreen.
@@ -216,42 +219,8 @@ Output: `decks/assets/generated/`
 
 ## Design Setup
 
-When DESIGN.md contains template placeholders (HTML comments with instructions), the user hasn't configured their design system yet. Offer to help them build it.
+When DESIGN.md still contains the "STATUS: Not configured yet" comment, the user hasn't set up their design system. This is the first thing to do. Tell them to run `/design-setup`.
 
-### Step 1: Gather inputs
+The `/design-setup` skill is a conversational design consultation that ships with Stella Decks. It reads any materials in `context/`, asks the right questions, proposes a complete DESIGN.md, and updates deck.css to match. See `.claude/skills/design-setup/SKILL.md` for the full workflow.
 
-Ask what materials they have:
-- Brand guidelines PDF? Upload it.
-- Existing deck or presentation? Upload or describe it.
-- Website or reference they like the look of? Share a URL.
-- Starting from scratch? That's fine too.
-
-If they provide materials, analyze them for: color palette, typography, tone/voice, visual density, use of imagery.
-
-### Step 2: Ask the 6 questions that matter
-
-These are the decisions that determine whether slides look good:
-
-1. **Audience and context:** "Who reads this deck, and how? Investor meeting? Cold send? Conference leave-behind?" (Drives density, formality, pacing)
-2. **Emotional register:** "Pick 2-3 words: confident, warm, analytical, bold, restrained, playful, authoritative..." (Drives typography, color, spacing)
-3. **Visual reference:** "Show me something that looks like what you want. A website, a deck, a magazine spread, anything." (Most useful single input)
-4. **Accent color:** "What color represents your brand? Or: what color do you want the eye drawn to?" (Drives the accent token)
-5. **Typography feel:** "Serif headlines (editorial, authoritative) or sans headlines (modern, clean)?" (Drives font choice)
-6. **Density:** "One big idea per slide, or pack in the detail?" (Drives padding tiers, font sizes, content rules)
-
-### Step 3: Generate DESIGN.md
-
-Write a complete DESIGN.md based on their answers. Include:
-- Specific color hex values (not just "blue" but the exact shade)
-- Specific Google Font recommendations
-- Spacing values in px
-- 3-5 design principles written in their voice
-- Clear "do not" rules
-
-### Step 4: Update deck.css tokens
-
-Update the CSS custom properties in `:root` to match the new DESIGN.md. Change `--ink`, `--coral`, `--warm-bg`, `--serif`, `--sans`, and spacing tokens as needed.
-
-### Step 5: Preview and iterate
-
-Ask them to preview the example deck to see if it feels right. Iterate on DESIGN.md and deck.css until they're happy with the look.
+If the user has [gstack](https://github.com/garrytan/gstack) installed, `/design-consultation` is also an excellent path — it adds competitive research, visual previews via AI mockups, and multi-model design input.
