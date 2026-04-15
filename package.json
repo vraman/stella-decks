@@ -8,6 +8,7 @@
     "start": "serve .",
     "preview": "serve .",
     "export": "node scripts/export-deck.mjs",
+    "export:video": "node scripts/export-video.mjs",
     "export:md": "node scripts/export-deck-md.mjs",
     "generate": "node scripts/generate-image.mjs"
   },

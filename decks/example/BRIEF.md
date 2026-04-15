@@ -8,9 +8,13 @@ A starter deck demonstrating the Stella Decks design system. Each slide shows a 
 
 You. This deck exists so you can see the design system in action before building your own slides.
 
+## Format
+
+Both (PDF + video). Slides are designed to work as static images and as animated video. Animations enhance but aren't required for comprehension.
+
 ## How to Use
 
-1. Preview this deck to see the patterns: `npx serve .` then open `viewer/index.html?deck=example`
+1. Preview this deck to see the patterns: `npm start` then open `viewer/index.html?deck=example`
 2. Copy a slide as a starting point for your own
 3. Edit the content, keeping the same class names and structure
 4. Add your slide to your deck's `manifest.json`
@@ -20,6 +24,7 @@ You. This deck exists so you can see the design system in action before building
 Every deck should have a BRIEF.md. It captures:
 - What the deck is for and who the audience is
 - Whether slides are narrative (persuade) or informational (explain/evidence)
+- Output format: `pdf`, `video`, or `both`
 - Key content decisions and what was changed and why
 - What to watch out for
 

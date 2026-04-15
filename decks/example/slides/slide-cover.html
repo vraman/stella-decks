@@ -6,18 +6,19 @@
 </head>
 <body>
 <div class="slide slide--cover">
-  <div class="cover__top">
+  <div class="cover__top anim-fade-in" data-anim-order="1">
     <div class="cover__logo" style="font-family: var(--serif); font-size: 28px; color: var(--white); letter-spacing: -0.5px;">Your Logo</div>
     <div class="cover__fund">Series A / 2026</div>
   </div>
   <div class="cover__middle">
-    <div class="cover__positioning">Your Positioning Line</div>
-    <h1 class="cover__tagline">The headline that<br><em>defines your deck</em></h1>
+    <div class="cover__positioning anim-fade-in" data-anim-order="2">Your Positioning Line</div>
+    <h1 class="cover__tagline anim-slide-up" data-anim-order="3">The headline that<br><em>defines your deck</em></h1>
   </div>
   <div class="cover__bottom">
-    <div class="cover__bottom-line">Key Fact One &nbsp;&middot;&nbsp; Key Fact Two &nbsp;&middot;&nbsp; Key Fact Three</div>
+    <div class="cover__bottom-line anim-fade-in" data-anim-order="4">Key Fact One &nbsp;&middot;&nbsp; Key Fact Two &nbsp;&middot;&nbsp; Key Fact Three</div>
   </div>
   <div class="slide-num slide-num--dark"></div>
 </div>
+<script src="../../styles/anim-controller.js"></script>
 </body>
 </html>

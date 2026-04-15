@@ -76,15 +76,15 @@
 <body>
 <div class="slide slide--example-hero">
   <div class="example-hero__left">
-    <div class="example-hero__label">Case Study</div>
-    <div class="example-hero__name">Company Name</div>
-    <div class="example-hero__origin">City, Country &middot; Founded 2019</div>
-    <div class="example-hero__desc">
+    <div class="example-hero__label anim-fade-in" data-anim-order="1">Case Study</div>
+    <div class="example-hero__name anim-slide-up" data-anim-order="2">Company Name</div>
+    <div class="example-hero__origin anim-fade-in" data-anim-order="2">City, Country &middot; Founded 2019</div>
+    <div class="example-hero__desc anim-fade-in" data-anim-order="3">
       A short description of the company and what makes it remarkable.
       Hero slides tell a story, not list features. What was the insight,
       the breakthrough, the outcome?
     </div>
-    <div class="example-hero__metrics">
+    <div class="example-hero__metrics anim-stagger-children" data-anim-order="4">
       <div>
         <div class="example-hero__metric-value example-hero__metric-value--accent">12.4x</div>
         <div class="example-hero__metric-label">Key Metric</div>
@@ -95,10 +95,11 @@
       </div>
     </div>
   </div>
-  <div class="example-hero__right">
+  <div class="example-hero__right anim-scale-in" data-anim-order="1">
     Product image or screenshot goes here
   </div>
   <div class="slide-num slide-num--dark"></div>
 </div>
+<script src="../../styles/anim-controller.js"></script>
 </body>
 </html>
