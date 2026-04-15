@@ -126,6 +126,13 @@ async function preloadFonts(page) {
 
 // ── Content-aware duration calculation ──
 async function calculateDuration(page, slideEntry) {
+  // Check if the page declares a photo cycle duration
+  const photoDuration = await page.evaluate(() => window.stellaPhotoDuration || 0);
+  if (photoDuration > 0) {
+    // Use cycle duration + 2s buffer for the last photo to breathe
+    return Math.round((photoDuration + 2) * 10) / 10;
+  }
+
   // Explicit per-slide duration takes priority
   if (typeof slideEntry.duration === 'number') {
     return slideEntry.duration;
