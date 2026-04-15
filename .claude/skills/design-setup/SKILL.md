@@ -116,9 +116,33 @@ Wait for them to add files, then go back to Step 1.
 
 ---
 
+## Step 2.5: Output format
+
+Before getting into visual specifics, ask about the output format. This shapes fundamental design choices:
+
+Use AskUserQuestion:
+
+**"How will this deck be experienced?"**
+
+- **PDF** — "It'll be emailed, printed, or shared as a file. People read it at their own pace."
+- **Video** — "It'll play on a screen — at an event, in a presentation, on social media."
+- **Both** — "It needs to work as a static PDF and as an animated video."
+
+**Why this matters for design:**
+
+**PDF (static):** Design for information density. Hierarchy comes from size, weight, color, and position. Show everything at once — the reader controls the pace. Favor complex layouts (multi-column, data tables, stat grids).
+
+**Video (motion):** Design for progressive disclosure. Less on screen at any moment — animation creates the hierarchy by revealing elements in order. Simpler layouts work better because the eye only follows one thing at a time. Use ambient motion (Ken Burns on backgrounds) to add energy. Always add animations with `data-anim-order` and include `anim-controller.js`.
+
+**Both:** Design for static first — every slide must work as a standalone image. Add animations that enhance but aren't required for comprehension. The animation sequence should mirror the natural reading order of the static layout.
+
+Record the format choice in the deck's BRIEF.md. It will influence every design decision from here on.
+
+---
+
 ## Step 3: Fill the gaps
 
-After the opening conversation, you should know the general direction. Now get specific on anything still unclear. Ask these AS A CONVERSATION, not as a numbered list. Only ask what you don't already know.
+After the opening conversation, you should know the general direction and output format. Now get specific on anything still unclear. Ask these AS A CONVERSATION, not as a numbered list. Only ask what you don't already know.
 
 **Color:** If you don't have specific colors yet:
 > "For the accent color — the one that draws the eye to the most important thing on each slide — do you have a brand color? Or should I pick one that fits the mood?"
@@ -189,6 +213,9 @@ Bad: "Avoid overusing accent colors."
 ### Component Aesthetics
 Card styles (border-radius, shadow, border), table styles, emphasis rules (italic? bold? color?).
 
+### Animation Style (if format is video or both)
+Describe the motion personality: which animation classes to prefer, how aggressive the entrance animations should be, whether to use ambient motion (Ken Burns, zoom), stagger pacing. This section should match the overall design voice — a restrained editorial deck gets subtle fades, a bold event deck gets energetic scale-ins and slide-ups.
+
 Present the proposed DESIGN.md to the user and ask: "How does this feel? What should I adjust?"
 
 ---
@@ -216,7 +243,7 @@ When they answer:
 
 1. **Create the deck folder:** `decks/{slug}/slides/`
 2. **Create `manifest.json`** with a working title
-3. **Create `BRIEF.md`** capturing the audience, purpose, and reading context from what they just told you
+3. **Create `BRIEF.md`** capturing the audience, purpose, output format, and reading context from what they just told you
 4. **Propose a slide outline** — 5-8 slides as a starting narrative arc. Don't build them all yet. Just the structure:
    > "Here's a first pass at the arc:
    > 1. Cover (dark) — headline + positioning
