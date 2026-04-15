@@ -147,7 +147,14 @@ async function exportPngs() {
       if (el) el.textContent = slideNum;
     }, num);
 
-    await new Promise(r => setTimeout(r, 600));
+    // Finish any CSS animations instantly so all elements are visible
+    await page.evaluate(() => {
+      const slide = document.querySelector('.slide');
+      if (slide) slide.classList.add('anim-play');
+      document.getAnimations().forEach(a => a.finish());
+    });
+
+    await new Promise(r => setTimeout(r, 300));
 
     await page.screenshot({
       path: outFile,

@@ -16,6 +16,7 @@ You are a design partner: part graphic designer, part communication strategist. 
 stella-decks/
   decks/
     styles/deck.css            # Shared design system (editable, add new styles as needed)
+    styles/anim-controller.js  # Animation sequencing controller (include in slides)
     assets/                    # Shared images across all decks
     {deck-name}/
       manifest.json            # Slide order and labels (source of truth for sequencing)
@@ -27,6 +28,7 @@ stella-decks/
   viewer/index.html            # Browser-based slide viewer
   scripts/
     export-deck.mjs            # Screenshot slides to PNG, compose into PDF
+    export-video.mjs           # Animated video export (Puppeteer + ffmpeg)
     export-deck-md.mjs         # Export deck content as Markdown
     generate-image.mjs         # Generate images via OpenAI API (optional)
   DESIGN.md                    # Design system brief (THE source for visual decisions)
@@ -155,10 +157,96 @@ These CSS classes are available in deck.css. Use them by adding the appropriate 
 Every deck should have a `BRIEF.md`. **Read it before touching any slide in that deck.** It captures:
 - What the deck is for and who the audience is
 - Whether slides are narrative (persuade) or informational (explain/evidence)
+- **Output format**: `pdf`, `video`, or `both` — this shapes design decisions (see below)
 - Key content decisions and what was changed and why
 - What to watch out for
 
 Update BRIEF.md when significant decisions are made.
+
+### Format-Aware Design
+
+The output format changes how you design slides. Check the BRIEF.md `format` field:
+
+**PDF (static):**
+- Show all content at once — hierarchy comes from size, weight, color, position
+- Use whitespace and layout to create reading order
+- Favor information density; the reader controls the pace
+- Animations are optional (they define hierarchy but aren't seen in the PDF)
+
+**Video (motion):**
+- Design for progressive disclosure — less on screen at any moment
+- Use simpler layouts; animation creates the hierarchy (things appear in order)
+- More dramatic typography works because elements enter one at a time
+- Use ambient animations (`.anim-ken-burns`, `.anim-zoom-in`) on background images to add energy
+- Always include animations with `data-anim-order` sequencing
+- Always include `<script src="../../styles/anim-controller.js"></script>`
+
+**Both:**
+- Design for static first — every slide must work as a standalone image
+- Add animations that enhance but aren't required for comprehension
+- Avoid layouts that depend on progressive reveal to make sense
+- The animation sequence should mirror the natural reading order of the static layout
+
+---
+
+## Animations
+
+Slides can include entrance animations and ambient motion. Animations are opt-in per-element and work across all outputs: the viewer plays them on navigation, video export captures them frame-by-frame, and PDF export finishes them instantly so all content is visible.
+
+### Animation Classes
+
+Add these classes to elements in the slide HTML:
+
+| Class | Effect | Duration |
+|-------|--------|----------|
+| `.anim-fade-in` | Opacity 0 to 1 | 600ms |
+| `.anim-slide-up` | Translate Y +30px to 0, fade in | 600ms |
+| `.anim-slide-left` | Translate X +40px to 0, fade in | 600ms |
+| `.anim-scale-in` | Scale 0.92 to 1, fade in | 500ms |
+| `.anim-ken-burns` | Slow pan + zoom (ambient, full slide duration) | 8s |
+| `.anim-zoom-in` | Slow zoom in (ambient, full slide duration) | 8s |
+
+### Sequencing
+
+Use `data-anim-order` to control the order elements appear:
+
+```html
+<h1 class="cover__tagline anim-slide-up" data-anim-order="1">Headline</h1>
+<div class="cover__sub anim-fade-in" data-anim-order="2">Subtitle</div>
+<div class="cover__facts anim-fade-in" data-anim-order="3">Facts</div>
+```
+
+Elements with the same order number animate together. Groups play sequentially.
+
+### Staggering Children
+
+For lists where items appear one by one, use `.anim-stagger-children` on the parent:
+
+```html
+<div class="glance__grid anim-stagger-children" data-anim-order="2">
+  <div class="glance__card">Card 1</div>
+  <div class="glance__card">Card 2</div>
+  <div class="glance__card">Card 3</div>
+</div>
+```
+
+### Controller Script
+
+Slides with animations must include the controller at the end of `<body>`:
+
+```html
+<script src="../../styles/anim-controller.js"></script>
+</body>
+```
+
+The controller reads `data-anim-order`, computes delays, and triggers playback. In the viewer, animations play on slide navigation. In video export, the export script controls the animation clock frame-by-frame.
+
+### When to Add Animations
+
+- Check the BRIEF.md `format` field. Always add animations for `video` and `both` formats.
+- For `pdf`-only decks, animations are optional — they won't be seen but they document visual hierarchy.
+- Keep animations tasteful. Not every element needs to animate. Prioritize headlines, key metrics, and card groups.
+- The animation sequence should follow the natural reading order of the slide.
 
 ---
 
@@ -190,6 +278,35 @@ Output: `exports/{deck}/slides/` (2560x1440 retina PNGs) + `exports/{deck}/{deck
 Slide numbers are auto-injected from manifest order during export.
 
 **Do not use Chrome's `page.pdf()` directly.** CSS features like `overflow: hidden`, `border-radius: 50%`, and `backdrop-filter` render incorrectly in Chrome's print context. The screenshot-to-PDF pipeline avoids these issues.
+
+### Video Export
+
+```bash
+node scripts/export-video.mjs              # MP4 (example deck)
+node scripts/export-video.mjs my-deck      # Export a specific deck
+node scripts/export-video.mjs --fps 60     # Override framerate
+```
+
+Output: `exports/{deck}/{deck}.mp4` (1920x1080, H.264)
+
+Requires ffmpeg installed on the system. The script captures each frame deterministically using the Web Animations API to control the animation clock, then pipes frames to ffmpeg.
+
+Video configuration lives in `manifest.json`:
+
+```json
+{
+  "video": {
+    "fps": 30,
+    "transition": "crossfade",
+    "transitionDuration": 0.6
+  },
+  "slides": [
+    { "file": "slide-cover.html", "label": "Cover", "duration": 5, "transition": "cut" }
+  ]
+}
+```
+
+Per-slide options: `duration` (seconds or `"auto"`), `transition` (`"cut"`, `"fade"`, `"crossfade"`), `transitionDuration`. When duration is omitted or `"auto"`, it's calculated from the slide's word count and animation groups.
 
 ### Markdown Export
 

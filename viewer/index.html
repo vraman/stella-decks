@@ -181,7 +181,7 @@
 
 <div id="viewer">
   <div id="slide-container">
-    <iframe id="slide-frame" sandbox="allow-same-origin" tabindex="-1"></iframe>
+    <iframe id="slide-frame" sandbox="allow-same-origin allow-scripts" tabindex="-1"></iframe>
   </div>
 </div>
 
@@ -284,7 +284,16 @@ function loadSlide(index, fromPopState) {
   current = index;
   frame.src = resolveSlideUrl(SLIDES[current]);
   const num = String(current + 1).padStart(2, '0');
-  frame.onload = () => injectSlideNumber(frame, num);
+  frame.onload = () => {
+    injectSlideNumber(frame, num);
+    // Trigger slide animations after a brief delay for rendering
+    try {
+      const win = frame.contentWindow;
+      if (win && typeof win.stellaPlayAnimations === 'function') {
+        setTimeout(() => win.stellaPlayAnimations(), 50);
+      }
+    } catch { /* cross-origin safety */ }
+  };
   counter.textContent = num;
   if (!fromPopState) setHash(current + 1);
   updateControls();
