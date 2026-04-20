@@ -126,12 +126,6 @@ async function preloadFonts(page) {
 
 // ── Content-aware duration calculation ──
 async function calculateDuration(page, slideEntry) {
-  // Check if the page has a video — use its duration
-  const videoDuration = await page.evaluate(() => window.stellaVideoDuration || 0);
-  if (videoDuration > 0) {
-    return Math.round(videoDuration * 10) / 10;
-  }
-
   // Check if the page declares a photo cycle duration
   const photoDuration = await page.evaluate(() => window.stellaPhotoDuration || 0);
   if (photoDuration > 0) {
@@ -219,22 +213,6 @@ async function prepareSlide(page, slideEntry, index, port) {
     if (el) el.textContent = slideNum;
   }, num);
 
-  // Pause and rewind any video so we have deterministic control
-  await page.evaluate(async () => {
-    const video = document.querySelector('video.slide-video');
-    if (video) {
-      video.pause();
-      video.currentTime = 0;
-      if (video.readyState < 2) {
-        await new Promise(r => {
-          const h = () => { video.removeEventListener('loadeddata', h); r(); };
-          video.addEventListener('loadeddata', h);
-          setTimeout(h, 2000);
-        });
-      }
-    }
-  });
-
   // Wait for rendering to settle
   await new Promise(r => setTimeout(r, 400));
 
@@ -253,9 +231,9 @@ async function captureSlideFrames(page, duration, ffmpegStdin, animOffsetMs = 0)
   const totalFrames = Math.round(duration * FPS);
   const fadeOutMs = 800;
 
-  // Check if this slide is a photo/video slide (those handle their own fades)
+  // Check if this slide is a photo-cycle slide (those handle their own fades)
   const isMediaSlide = await page.evaluate(() => {
-    return !!document.querySelector('.disco-photo-cycle, video.slide-video');
+    return !!document.querySelector('.disco-photo-cycle');
   });
 
   // Pause all animations at the starting offset
@@ -284,31 +262,12 @@ async function captureSlideFrames(page, duration, ffmpegStdin, animOffsetMs = 0)
     }
 
     // Advance animations using animTime (continues from transition offset)
-    // Advance video using slideTime (starts fresh at beginning of hold)
-    await page.evaluate(async (animT, slideT) => {
+    await page.evaluate(async (animT) => {
       document.getAnimations().forEach(a => {
         a.currentTime = animT;
       });
-      const video = document.querySelector('video.slide-video');
-      if (video && video.readyState >= 2) {
-        const targetTime = Math.min(slideT / 1000, video.duration - 0.01);
-        // Seek and wait for the video frame to actually be painted
-        video.currentTime = targetTime;
-        await new Promise(r => {
-          let done = false;
-          const finish = () => { if (!done) { done = true; r(); } };
-          // requestVideoFrameCallback fires when a new frame is presented
-          if (video.requestVideoFrameCallback) {
-            video.requestVideoFrameCallback(finish);
-          } else {
-            const onSeeked = () => { video.removeEventListener('seeked', onSeeked); finish(); };
-            video.addEventListener('seeked', onSeeked);
-          }
-          setTimeout(finish, 1000); // safety timeout
-        });
-      }
       await new Promise(r => requestAnimationFrame(r));
-    }, animTimeMs, slideTimeMs);
+    }, animTimeMs);
 
     // Screenshot and pipe to ffmpeg (JPEG for speed)
     const screenshot = await page.screenshot({

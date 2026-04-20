@@ -400,30 +400,6 @@ body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: anti
 .close__tagline { font-family: var(--serif); font-size: 32px; color: var(--slate-light); font-style: italic; letter-spacing: -0.3px; }
 
 /* =====================================================================
-   VIDEO SLIDES
-   Native HTML5 video displayed at natural aspect ratio.
-   The export script advances video.currentTime frame-by-frame.
-   Requires <video class="slide-video"> wrapped in .slide-video-container.
-   ===================================================================== */
-
-.slide-video-container {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 28px;
-}
-
-.slide-video {
-  max-width: 100%;
-  max-height: 100%;
-  display: block;
-  border-radius: 4px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-}
-
-/* =====================================================================
    ANIMATIONS
    Entrance and ambient animations for video export and viewer playback.
    Elements with .anim-* classes start hidden. Adding .anim-play to the
