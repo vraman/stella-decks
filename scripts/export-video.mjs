@@ -110,7 +110,7 @@ const outPath = resolve(outDir, `${deckSlug}.mp4`);
 // ── Preload fonts (same logic as export-deck.mjs) ──
 async function preloadFonts(page) {
   await page.evaluate(async () => {
-    const families = ['Instrument Serif', 'DM Sans'];
+    const families = ['Instrument Serif', 'DM Sans', 'Monoton', 'Passion One'];
     const weights = ['400', '500', '600', '700'];
     const loads = [];
     for (const f of families) {
@@ -126,11 +126,30 @@ async function preloadFonts(page) {
 
 // ── Content-aware duration calculation ──
 async function calculateDuration(page, slideEntry) {
+  // Check if the page has a video — use its duration
+  const videoDuration = await page.evaluate(() => window.stellaVideoDuration || 0);
+  if (videoDuration > 0) {
+    return Math.round(videoDuration * 10) / 10;
+  }
+
   // Check if the page declares a photo cycle duration
   const photoDuration = await page.evaluate(() => window.stellaPhotoDuration || 0);
   if (photoDuration > 0) {
     // Use cycle duration + 2s buffer for the last photo to breathe
     return Math.round((photoDuration + 2) * 10) / 10;
+  }
+
+  // Quote slides: calculate reading time from the primary-language quote
+  const quoteWords = await page.evaluate(() => {
+    const el = document.querySelector('.disco-quote__text, .slide-quote-text');
+    if (!el) return 0;
+    const text = el.innerText || '';
+    return text.split(/\s+/).filter(w => w.length > 0).length;
+  });
+  if (quoteWords > 0) {
+    // Silent reading ~300wpm (5 wps), plus 2s buffer. Glance-friendly.
+    // Min 6s so short quotes don't flash by.
+    return Math.max(6, Math.round((quoteWords / 5 + 2) * 10) / 10);
   }
 
   // Explicit per-slide duration takes priority
@@ -194,19 +213,32 @@ async function prepareSlide(page, slideEntry, index, port) {
   await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
   await preloadFonts(page);
 
-  // Set capture mode flag before any scripts run
-  await page.evaluate(() => { window.__STELLA_CAPTURE = true; });
-
   // Inject slide number
   await page.evaluate((slideNum) => {
     const el = document.querySelector('.slide-num');
     if (el) el.textContent = slideNum;
   }, num);
 
+  // Pause and rewind any video so we have deterministic control
+  await page.evaluate(async () => {
+    const video = document.querySelector('video.slide-video');
+    if (video) {
+      video.pause();
+      video.currentTime = 0;
+      if (video.readyState < 2) {
+        await new Promise(r => {
+          const h = () => { video.removeEventListener('loadeddata', h); r(); };
+          video.addEventListener('loadeddata', h);
+          setTimeout(h, 2000);
+        });
+      }
+    }
+  });
+
   // Wait for rendering to settle
   await new Promise(r => setTimeout(r, 400));
 
-  // Trigger animations so they exist (but paused)
+  // Trigger animations (they're paused under capture mode; this creates the Animation objects)
   await page.evaluate(() => {
     const slide = document.querySelector('.slide');
     if (slide) slide.classList.add('anim-play');
@@ -219,6 +251,12 @@ async function prepareSlide(page, slideEntry, index, port) {
 // ── Capture frames for a slide ──
 async function captureSlideFrames(page, duration, ffmpegStdin, animOffsetMs = 0) {
   const totalFrames = Math.round(duration * FPS);
+  const fadeOutMs = 800;
+
+  // Check if this slide is a photo/video slide (those handle their own fades)
+  const isMediaSlide = await page.evaluate(() => {
+    return !!document.querySelector('.disco-photo-cycle, video.slide-video');
+  });
 
   // Pause all animations at the starting offset
   await page.evaluate((offset) => {
@@ -228,20 +266,54 @@ async function captureSlideFrames(page, duration, ffmpegStdin, animOffsetMs = 0)
     });
   }, animOffsetMs);
 
+  const totalSlideMs = duration * 1000;
+
   for (let frame = 0; frame < totalFrames; frame++) {
-    const timeMs = animOffsetMs + (frame / FPS) * 1000;
+    const animTimeMs = animOffsetMs + (frame / FPS) * 1000;
+    const slideTimeMs = (frame / FPS) * 1000;
 
-    // Advance animation clock and wait for repaint
-    await page.evaluate(async (t) => {
+    // Fade-out: for non-media slides, fade animated elements in the last fadeOutMs
+    const msFromEnd = totalSlideMs - slideTimeMs;
+    if (!isMediaSlide && msFromEnd < fadeOutMs) {
+      const fadeProgress = 1 - msFromEnd / fadeOutMs;
+      await page.evaluate((progress) => {
+        document.querySelectorAll('[data-anim-order]').forEach(el => {
+          el.style.opacity = String(1 - progress);
+        });
+      }, Math.min(1, Math.max(0, fadeProgress)));
+    }
+
+    // Advance animations using animTime (continues from transition offset)
+    // Advance video using slideTime (starts fresh at beginning of hold)
+    await page.evaluate(async (animT, slideT) => {
       document.getAnimations().forEach(a => {
-        a.currentTime = t;
+        a.currentTime = animT;
       });
-      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-    }, timeMs);
+      const video = document.querySelector('video.slide-video');
+      if (video && video.readyState >= 2) {
+        const targetTime = Math.min(slideT / 1000, video.duration - 0.01);
+        // Seek and wait for the video frame to actually be painted
+        video.currentTime = targetTime;
+        await new Promise(r => {
+          let done = false;
+          const finish = () => { if (!done) { done = true; r(); } };
+          // requestVideoFrameCallback fires when a new frame is presented
+          if (video.requestVideoFrameCallback) {
+            video.requestVideoFrameCallback(finish);
+          } else {
+            const onSeeked = () => { video.removeEventListener('seeked', onSeeked); finish(); };
+            video.addEventListener('seeked', onSeeked);
+          }
+          setTimeout(finish, 1000); // safety timeout
+        });
+      }
+      await new Promise(r => requestAnimationFrame(r));
+    }, animTimeMs, slideTimeMs);
 
-    // Screenshot and pipe to ffmpeg
+    // Screenshot and pipe to ffmpeg (JPEG for speed)
     const screenshot = await page.screenshot({
-      type: 'png',
+      type: 'jpeg',
+      quality: 92,
       clip: { x: 0, y: 0, width: SLIDE_W, height: SLIDE_H },
     });
 
@@ -286,12 +358,13 @@ async function captureTransitionFrames(page, prevFrameBuffer, transition, transi
       document.getAnimations().forEach(a => {
         a.currentTime = ms;
       });
-      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      await new Promise(r => requestAnimationFrame(r));
     }, timeMs);
 
     // Capture incoming slide frame
     const incomingFrame = await page.screenshot({
-      type: 'png',
+      type: 'jpeg',
+      quality: 92,
       clip: { x: 0, y: 0, width: SLIDE_W, height: SLIDE_H },
     });
 
@@ -306,7 +379,7 @@ async function captureTransitionFrames(page, prevFrameBuffer, transition, transi
         const img = new Image();
         img.onload = () => resolve(img);
         img.onerror = reject;
-        img.src = 'data:image/png;base64,' + b64;
+        img.src = 'data:image/jpeg;base64,' + b64;
       });
 
       const [prevImg, inImg] = await Promise.all([loadImg(prevB64), loadImg(inB64)]);
@@ -376,6 +449,13 @@ async function main() {
     deviceScaleFactor: SCALE_FACTOR,
   });
 
+  // Set capture flag BEFORE any slide's scripts run. This prevents
+  // anim-controller.js from auto-triggering animations and prevents
+  // video elements from autoplaying during page load.
+  await page.evaluateOnNewDocument(() => {
+    window.__STELLA_CAPTURE = true;
+  });
+
   // First pass: calculate all durations
   const slideDurations = [];
   for (let i = 0; i < slides.length; i++) {
@@ -408,8 +488,8 @@ async function main() {
     '-i', '-',                    // read PNGs from stdin
     '-c:v', 'libx264',
     '-pix_fmt', 'yuv420p',
-    '-preset', 'medium',
-    '-crf', '18',
+    '-preset', 'slow',
+    '-crf', '23',
     '-movflags', '+faststart',
     '-vf', `scale=${OUT_W}:${OUT_H}:flags=lanczos`,
     outPath,
@@ -466,7 +546,8 @@ async function main() {
 
       // Capture last frame of current slide as buffer
       const lastFrame = await page.screenshot({
-        type: 'png',
+        type: 'jpeg',
+        quality: 92,
         clip: { x: 0, y: 0, width: SLIDE_W, height: SLIDE_H },
       });
 
