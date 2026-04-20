@@ -250,47 +250,6 @@ The controller reads `data-anim-order`, computes delays, and triggers playback. 
 
 ---
 
-## Video Slides
-
-Slides can embed native HTML5 video. The video plays in the viewer and is captured frame-by-frame during video export (the export script advances `video.currentTime` alongside CSS animations).
-
-### Structure
-
-```html
-<div class="slide slide--[type]">
-  <div class="slide-video-container">
-    <video class="slide-video" src="../photos/my-video.mp4" muted playsinline preload="auto"></video>
-  </div>
-</div>
-<script>
-  (function () {
-    var video = document.querySelector('video.slide-video');
-    if (!video) return;
-    if (!window.__STELLA_CAPTURE) {
-      video.loop = true;
-      video.play().catch(function () {});
-    }
-    video.addEventListener('loadedmetadata', function () {
-      window.stellaVideoDuration = video.duration;
-    });
-  })();
-</script>
-```
-
-### Rules
-
-- Video must be class `slide-video` inside a `.slide-video-container`
-- Use H.264/MP4 for broad compatibility (convert with `ffmpeg -c:v libx264 -pix_fmt yuv420p`)
-- Mark `muted` and `playsinline` so autoplay works in the viewer
-- The inline script sets `window.stellaVideoDuration` so the export script auto-sizes the slide duration to match the video
-- In capture mode (`window.__STELLA_CAPTURE`), don't autoplay — the export script controls playback via `currentTime`
-
-### Video export behavior
-
-On each frame, the export script sets `video.currentTime = frameTime` and waits for the `seeked` event before screenshotting. This gives deterministic, frame-perfect video playback at the target framerate.
-
----
-
 ## Workflow
 
 ### Preview
